@@ -16,6 +16,7 @@ import {
   fit as fitToWidth,
   formatDuration,
   levelOf,
+  paceLevel,
   rowValueText,
 } from "../src/view/format.js";
 import {
@@ -161,6 +162,23 @@ describe("view format", () => {
     { percent: -3, expected: "low" },
   ] as const)("$percent% left is $expected", ({ percent, expected }) => {
     expect(levelOf(percent, { warningBelow: 50, lowBelow: 20 })).toBe(expected);
+  });
+
+  it.each([
+    { kind: "spare", evenLeft: 50, left: 80, expected: "good" },
+    { kind: "on_track", evenLeft: 50, left: 50, expected: "warning" },
+    { kind: "fast", evenLeft: 50, left: 30, expected: "low" },
+    // Under a tenth of the window passed: one burst of use is no run-out yet.
+    { kind: "fast", evenLeft: 95, left: 50, expected: "warning" },
+    { kind: "fast", evenLeft: 95, left: 0, expected: "low" },
+    { kind: "fast", evenLeft: 90, left: 50, expected: "low" },
+  ] as const)("$kind with $left% left and $evenLeft% of the window to come is $expected", ({
+    kind,
+    evenLeft,
+    left,
+    expected,
+  }) => {
+    expect(paceLevel({ evenLeft, kind }, left)).toBe(expected);
   });
 
   it.each([
